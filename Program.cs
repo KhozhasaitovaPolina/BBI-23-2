@@ -1,103 +1,247 @@
-﻿using System;
+﻿using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 
-public abstract class Discipline
+abstract class Task
 {
-    protected string disciplineName;
-    protected string _sportsmen;
-    protected double _res1;
-    protected double _res2;
-    protected double _res3;
+    public string _text;
+    public Task(string text) { _text = text; }
+    public virtual void ParseText(string text) { _text = text; }
 
-    public string Sportsmen => _sportsmen;
-    public double Res1 => _res1;
-    public double Res2 => _res2;
-    public double Res3 => _res3;
 
-    public Discipline(string disname, string sportsmen, double res1, double res2, double res3)
-    {
-        disciplineName = disname;
-        _sportsmen = sportsmen;
-        _res1 = res1;
-        _res2 = res2;
-        _res3 = res3;
-    }
 }
 
-class BestResult
+class Task1 : Task
 {
-    public string Sportsmen { get; }
-    public double BestRes { get; }
-
-    public BestResult(string sportsmen, double bestRes)
+    private string result;
+    public Task1(string text) : base(text) { }
+    public override void ParseText(string text)
     {
-        Sportsmen = sportsmen;
-        BestRes = bestRes;
-    }
-}
+        text = text.ToLower();
+        string pattern = "[а-я]"; //символы русского языка в нижнем регистре
+        Regex regex = new Regex(pattern);
+        MatchCollection matches = regex.Matches(text);
 
-public class LongJump : Discipline
-{
-    public LongJump(string discipline, string sportsmen, double res1, double res2, double res3) : base(discipline, sportsmen, res1, res2, res3)
-    {
-    }
-}
+        string newtext = "";
 
-public class JumpHight : Discipline
-{
-    public JumpHight(string discipline, string sportsmen, double res1, double res2, double res3) : base(discipline, sportsmen, res1, res2, res3)
-    {
-    }
-}
-
-internal class Program
-{
-    static void Main(string[] args)
-    {
-        JumpHight[] vid = new JumpHight[6];
-        vid[0] = new JumpHight("Прыжки в длинну", "Безруков", 3.34, 2.25, 3.44);
-        vid[1] = new JumpHight("Прыжки в длинну", "Безногов", 2.22, 1.88, 2.76);
-        vid[2] = new JumpHight("Прыжки в длинну", "Бабайкин", 0.99, 3.75, 3.13);
-        vid[3] = new JumpHight("Прыжки в длинну", "Бугайкин", 2.34, 2.97, 3.12);
-        vid[4] = new JumpHight("Прыжки в длинну", "Левошоловин", 1.87, 2.13, 1.86);
-        vid[5] = new JumpHight("Прыжки в длинну", "Акипов", 2.99, 4.01, 3.67);
-
-        LongJump[] vid1 = new LongJump[6];
-        vid1[0] = new LongJump("Прыжки в высоту", "Безруков", 2.24, 3.52, 3.14);
-        vid1[1] = new LongJump("Прыжки в высоту", "Безногов", 2.31, 2.28, 3.76);
-        vid1[2] = new LongJump("Прыжки в высоту", "Бабайкин", 0.99, 5.75, 2.53);
-        vid1[3] = new LongJump("Прыжки в высоту", "Бугайкин", 1.34, 3.57, 1.11);
-        vid1[4] = new LongJump("Прыжки в высоту", "Левошоловин", 1.47, 3.13, 1.76);
-        vid1[5] = new LongJump("Прыжки в высоту", "Акипов", 3.56, 5.61, 2.67);
-
-        BestResult[] bestResultsVid = new BestResult[6];
-        for (int i = 0; i < vid.Length; i++)
+        if (matches.Count > 0)
         {
-            double bestRes = Math.Max(vid[i].Res1, Math.Max(vid[i].Res2, vid[i].Res3));
-            bestResultsVid[i] = new BestResult(vid[i].Sportsmen, bestRes);
+            foreach (Match match in matches)
+            {
+                newtext += match.Value;
+            }
+            Frequency(newtext);
         }
 
-        Array.Sort(bestResultsVid, (a, b) => b.BestRes.CompareTo(a.BestRes));
-
-        Console.WriteLine("Лучшие результаты для Прыжков в длину:");
-        foreach (var elem in bestResultsVid)
+        else
         {
-            Console.WriteLine($"{elem.Sportsmen} - {elem.BestRes}");
+            Console.WriteLine("В тексте нет русских букв");
         }
-
-        BestResult[] bestResultsVid1 = new BestResult[6];
-        for (int i = 0; i < vid1.Length; i++)
+    }
+    private void Frequency(string text)
+    {
+        int[] letterFrqsy = new int[32]; //массив с кодами букв
+        for (int i = 0; i < 32; i++) { letterFrqsy[i] = 1072 + i; }
+        double cnt = 0;
+        for (int i = 0; i < letterFrqsy.Length; i++)
         {
-            double bestRes = Math.Max(vid1[i].Res1, Math.Max(vid1[i].Res2, vid1[i].Res3));
-            bestResultsVid1[i] = new BestResult(vid1[i].Sportsmen, bestRes);
+            for (int j = 0; j < text.Length; j++)
+            {
+                if (text[j] == letterFrqsy[i]) { cnt++; }
+            }
+            result += $"Частота буквы {(char)letterFrqsy[i]} составляет {cnt / text.Length * 100}%" + "\n";
+            cnt = 0;
         }
-
-        Array.Sort(bestResultsVid1, (a, b) => b.BestRes.CompareTo(a.BestRes)); // Сортировка массива лучших результатов
-
-        Console.WriteLine("Лучшие результаты для Прыжков в высоту:");
-        foreach (var elem in bestResultsVid1)
-        {
-            Console.WriteLine($"{elem.Sportsmen} - {elem.BestRes}");
-        }
+    }
+    public override string ToString()
+    {
+        return result;
     }
 }
 
+class Task3 : Task
+{
+    private string split;
+    public Task3 (string text) : base(text) { }
+    public override void ParseText(string text)
+    {
+        string pattern = @".{1,50}(\s)"; //символы в диапазоне [1;50], строка завершается пробелом
+        Regex regex = new Regex(pattern);
+        MatchCollection matches = regex.Matches(text);
+
+        if (matches.Count > 0)
+        {
+            foreach (Match match in matches)
+            {
+                split += match.Value + "\n";
+            }
+        }
+    }
+    public override string ToString()
+    {
+        return split;
+    }
+}
+class Task5 : Task
+{   private string result;
+    public Task5 (string text) : base(text) { }
+    public override void ParseText(string text)
+    {
+        Dictionary<char, double> kakchasto = new Dictionary<char, double>();
+        int countSymbols = 0;
+
+        foreach (char letter in text.ToLower())
+        {
+            if (char.IsLetter(letter))
+            {
+                countSymbols++;
+                if (kakchasto.ContainsKey(letter))
+                {
+                    kakchasto[letter]++;
+                }
+                else
+                {
+                    kakchasto.Add(letter, 1);
+                }
+            }
+        }
+
+       
+        foreach (var pair in kakchasto)
+        {
+            double frequency = pair.Value / countSymbols;
+            result += $"Буква '{pair.Key}' встречается с частотой {frequency:P}\n";
+        }
+        
+    }
+    
+    public override string ToString()
+    {
+        return result;
+    }
+}
+class Task7 : Task
+{
+    private string result = "Слова, содержащие заданную последовательность" + "\n";
+    public Task7 (string text) : base(text) { }
+
+    public override void ParseText(string text)
+    {
+        Regex regex = new Regex(@"\b\w*(ьорд)\w*\b");
+        MatchCollection matches = regex.Matches(text);
+
+        if (matches.Count > 0) 
+        { 
+            foreach (Match match in matches)
+            {
+                result += match.Value + "\n";
+            }
+        }
+    
+    }
+    public override string ToString()
+    {
+        return result;
+    }
+}
+
+
+class Task11 : Task
+{
+    private string[] names;
+
+    public Task11(string namesString) : base(namesString)
+    {
+        names = namesString.Split(',');
+    }
+
+    private void BubbleSort(string[] arr)
+    {
+        int n = arr.Length;
+        for (int i = 0; i < n - 1; i++)
+        {
+            for (int j = 0; j < n - i - 1; j++)
+            {
+                if (arr[j].CompareTo(arr[j + 1]) > 0)
+                {
+                    string temp = arr[j];
+                    arr[j] = arr[j + 1];
+                    arr[j + 1] = temp;
+                }
+            }
+        }
+    }
+
+    public override string ToString()
+    {
+        BubbleSort(names);
+
+        string result = "Отсортированный список фамилий:\n";
+        foreach (string name in names)
+        {
+            result += name.Trim() + "\n";
+        }
+        return result;
+    }
+}
+
+class Task14 : Task
+{
+    private int sum;
+
+    public Task14(string text) : base(text) { }
+
+    public override void ParseText(string text)
+    {
+        string[] words = text.Split(' ');
+
+        foreach (string word in words)
+        {
+            if (int.TryParse(word, out int number))
+            {
+                if (number >= 1 && number <= 10)
+                {
+                    sum += number;
+                }
+            }
+        }
+    }
+
+    public override string ToString()
+    {
+        return $"Сумма чисел от 1 до 10 в тексте: {sum}";
+    }
+}
+class Program
+{
+    static void Main()
+    {
+        Task1 task1 = new Task1("Первое кругосветное путешествие было осуществлено флотом, возглавляемым португальским исследователем Фернаном Магелланом. Путешествие началось 20 сентября 1519 года, когда флот, состоящий из пяти кораблей и примерно 270 человек, отправился из порту Сан-Лукас в Испании. Хотя Магеллан не закончил свое путешествие из-за гибели в битве на Филиппинах в 1521 году, его экспедиция стала первой, которая успешно обогнула Землю и доказала ее круглую форму. Это путешествие открыло новые морские пути и имело огромное значение для картографии и географических открытий. ");
+        task1.ParseText(task1._text);
+        Console.WriteLine(task1.ToString());
+        
+
+        Task3 task3 = new Task3("Фьорды – это ущелья, формирующиеся ледниками и заполняющиеся морской водой. Название происходит от древнескандинавского слова \"fjǫrðr\". Эти глубокие заливы, окруженные высокими горами, представляют захватывающие виды и природную красоту. Они популярны среди туристов и известны под разными названиями: в Норвегии – \"фьорды\", в Шотландии – \"фьордс\", в Исландии – \"фьордар\". Фьорды играют важную роль в культуре и туризме региона, продолжая вдохновлять людей со всего мира.");
+        task3.ParseText(task3._text);
+        Console.WriteLine(task3.ToString());
+
+ 
+        string inputkakchasto = "После многолетних исследований ученые обнаружили тревожную тенденцию в вырубке лесов Амазонии. Анализ данных показал, что основной участник разрушения лесного покрова – человеческая деятельность. За последние десятилетия рост объема вырубки достиг критических показателей. Главными факторами, способствующими этому, являются промышленные рубки, производство древесины, расширение сельскохозяйственных угодий и незаконная добыча древесины. Это приводит к серьезным экологическим последствиям, таким как потеря биоразнообразия, ухудшение климата и угроза вымирания многих видов животных и растений.";
+        Task5 task5 = new Task5(inputkakchasto);
+        task5.ParseText(task5._text);
+        Console.WriteLine(task5.ToString()); 
+
+        string root = "лед";
+        Task7 task7 = new Task7("Фьорды – это ущелья, формирующиеся ледниками и заполняющиеся морской водой. Название происходит от древнескандинавского слова \"fjǫrðr\". Эти глубокие заливы, окруженные высокими горами, представляют захватывающие виды и природную красоту. Они популярны среди туристов и известны под разными названиями: в Норвегии – \"фьорды\", в Шотландии – \"фьордс\", в Исландии – \"фьордар\". Фьорды играют важную роль в культуре и туризме региона, продолжая вдохновлять людей со всего мира.");
+        task7.ParseText(task7._text);
+        Console.WriteLine(task7.ToString());
+
+        string inputNames = "Кукушкин, Петров, Бобиков, Бабайкин, Анапов, Сочин";
+        Task11 task11 = new Task11(inputNames);
+        Console.WriteLine(task11.ToString());
+
+        string inputText = "Найти сумму чисел: 3 5 12 8 9 2";
+        Task14 task14 = new Task14(inputText);
+        task14.ParseText(task14._text);
+        Console.WriteLine(task14.ToString());
+    }
+}
